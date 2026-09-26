@@ -55,10 +55,18 @@ class BaseConfig:
 
     # ── Database ──────────────────────────────────────────────────────────────
     # DATABASE_URL is read from .env (e.g. postgresql+psycopg://user:pass@host/db)
-    DATABASE_URL: str = os.environ.get("DATABASE_URL", "")
+    # Render and other platforms often provide 'postgres://' or 'postgresql://'
+    # We must replace it with 'postgresql+psycopg://' to use our installed driver.
+    _raw_db_url = os.environ.get("DATABASE_URL", "")
+    if _raw_db_url.startswith("postgres://"):
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif _raw_db_url.startswith("postgresql://"):
+        _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        
+    DATABASE_URL: str = _raw_db_url
 
     # Flask-SQLAlchemy reads SQLALCHEMY_DATABASE_URI — we map DATABASE_URL to it.
-    SQLALCHEMY_DATABASE_URI: str = os.environ.get("DATABASE_URL", "")
+    SQLALCHEMY_DATABASE_URI: str = _raw_db_url
 
     # Disable the SQLAlchemy event system for objects that are not tracked.
     # This saves memory and prevents a deprecation warning.
