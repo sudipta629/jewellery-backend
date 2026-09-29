@@ -26,7 +26,7 @@ Flask-Migrate==4.1.0
 # psycopg v3 (modern driver) — [binary] installs pre-compiled wheels so no
 # C compiler is needed on Windows.  Works with Python 3.13.
 # SQLAlchemy URL scheme: postgresql+psycopg://
-psycopg[binary]==3.2.9
+psycopg[binary]==3.2.10
 
 # ── JWT Authentication ────────────────────────────────────────────────────────
 # Flask-JWT-Extended: access tokens + refresh tokens, @jwt_required() decorator
