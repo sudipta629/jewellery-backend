@@ -19,6 +19,14 @@ import pytest
 
 # Force development mode so OTP is exposed in API responses during tests.
 os.environ["FLASK_ENV"] = "development"
+os.environ["GMAIL_ADDRESS"] = "test@gmail.com"
+os.environ["GMAIL_APP_PASSWORD"] = "dummy"
+
+from unittest.mock import patch
+
+# Globally patch SMTP to prevent any real network calls during tests.
+patcher = patch("smtplib.SMTP")
+patcher.start()
 
 from app import create_app
 from app.extensions import db as _db

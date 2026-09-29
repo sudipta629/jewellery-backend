@@ -174,7 +174,17 @@ def request_otp():
         # In production, this should ideally be dispatched to a background queue
         # (like Celery/Redis) to avoid blocking the HTTP response on SMTP latency.
         # But for this implementation, we handle it synchronously.
-        EmailService.send_otp_email(identifier, plaintext_otp)
+        success = EmailService.send_otp_email(identifier, plaintext_otp)
+        if not success:
+            return jsonify({
+                "status": "error",
+                "message": "Failed to deliver OTP email. Please try again later.",
+            }), 500
+    elif identifier_type == "phone":
+        return jsonify({
+            "status": "error",
+            "message": "SMS delivery is not currently configured.",
+        }), 501
 
     # ── Development-only: expose OTP in the response ──────────────────────────
     # This block is ONLY executed when FLASK_ENV=development.

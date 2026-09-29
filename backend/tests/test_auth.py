@@ -108,15 +108,13 @@ class TestRequestOTP:
         assert data["otp"].isdigit()
 
     def test_request_otp_with_valid_phone(self, client):
-        """Should return 200 with the OTP for a phone number."""
+        """Should return 501 because SMS is not configured."""
         resp = request_otp(client, "+919876543210", "phone")
         data = resp.get_json()
 
-        assert resp.status_code == 200
-        assert data["status"] == "success"
-        assert data["development_only"] is True
-        assert len(data["otp"]) == 6
-        assert data["otp"].isdigit()
+        assert resp.status_code == 501
+        assert data["status"] == "error"
+        assert "SMS" in data["message"]
 
     @patch("app.services.email_service.smtplib.SMTP")
     @patch("app.services.email_service.os.environ.get")
@@ -148,9 +146,9 @@ class TestRequestOTP:
         assert "Your login verification code is:" in msg.get_content()
 
     def test_request_otp_with_plain_phone_digits(self, client):
-        """Phone without leading '+' should also be accepted."""
+        """Phone without leading '+' should also be accepted and return 501."""
         resp = request_otp(client, "9876543210", "phone")
-        assert resp.status_code == 200
+        assert resp.status_code == 501
 
     # ── Validation failures ───────────────────────────────────────────────────
 
