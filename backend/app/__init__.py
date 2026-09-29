@@ -113,6 +113,18 @@ def create_app(config_name: str = None) -> Flask:
     with app.app_context():
         from . import models  # noqa: F401
 
+        # Safely attempt to seed the initial admin account from environment variables.
+        # This allows production deployments on Render to automatically create the
+        # admin account on startup without needing to run the `flask init-admin` CLI command.
+        try:
+            from app.services.admin_service import AdminService
+            AdminService.init_admin_from_env()
+        except Exception as e:
+            # If the database tables haven't been created yet (e.g., migrations
+            # haven't run), this will fail. We catch and ignore it so the app
+            # still starts up and allows `flask db upgrade` to run.
+            pass
+
     # ── Register blueprints ───────────────────────────────────────────────────
     from .routes import register_blueprints
     register_blueprints(app)
