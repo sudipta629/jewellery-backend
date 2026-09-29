@@ -55,6 +55,7 @@ from flask_jwt_extended import (
 from app.extensions import db, limiter
 from app.models.user import User
 from app.services.auth_service import AuthService, OTPService, TokenBlacklistService
+from app.services.email_service import EmailService
 from app.utils.validators import (
     is_valid_email,
     is_valid_identifier_type,
@@ -166,13 +167,20 @@ def request_otp():
 
     # Create the OTP record (invalidates any previous pending OTPs).
     otp_record = OTPService.create_otp_record(identifier, identifier_type)
+    plaintext_otp = getattr(otp_record, "_plaintext_otp", None)
+
+    # ── Send Email OTP ────────────────────────────────────────────────────────
+    if identifier_type == "email" and plaintext_otp:
+        # In production, this should ideally be dispatched to a background queue
+        # (like Celery/Redis) to avoid blocking the HTTP response on SMTP latency.
+        # But for this implementation, we handle it synchronously.
+        EmailService.send_otp_email(identifier, plaintext_otp)
 
     # ── Development-only: expose OTP in the response ──────────────────────────
     # This block is ONLY executed when FLASK_ENV=development.
     # In production this branch is never entered, so the OTP is never
     # included in the response body.
     if _is_development():
-        plaintext_otp = getattr(otp_record, "_plaintext_otp", None)
         return jsonify({
             "status": "success",
             "message": "OTP generated successfully.",

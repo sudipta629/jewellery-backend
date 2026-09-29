@@ -21,6 +21,7 @@ so each test starts with an empty database.
 """
 
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
 
@@ -116,6 +117,35 @@ class TestRequestOTP:
         assert data["development_only"] is True
         assert len(data["otp"]) == 6
         assert data["otp"].isdigit()
+
+    @patch("app.services.email_service.smtplib.SMTP")
+    @patch("app.services.email_service.os.environ.get")
+    def test_request_otp_sends_email(self, mock_env_get, mock_smtp, client):
+        """Requesting an OTP for an email should trigger SMTP delivery."""
+        # Mock environment variables for Gmail credentials
+        def mock_env(key, default=None):
+            if key == "GMAIL_ADDRESS": return "test@gmail.com"
+            if key == "GMAIL_APP_PASSWORD": return "password123"
+            return default
+        mock_env_get.side_effect = mock_env
+
+        mock_server = mock_smtp.return_value.__enter__.return_value
+
+        resp = request_otp(client, "sendemail@example.com", "email")
+        
+        assert resp.status_code == 200
+        
+        # Verify SMTP server was called correctly
+        mock_smtp.assert_called_with("smtp.gmail.com", 587, timeout=10)
+        mock_server.starttls.assert_called_once()
+        mock_server.login.assert_called_once_with("test@gmail.com", "password123")
+        mock_server.send_message.assert_called_once()
+        
+        # Verify message contents
+        msg = mock_server.send_message.call_args[0][0]
+        assert msg["To"] == "sendemail@example.com"
+        assert msg["From"] == "test@gmail.com"
+        assert "Your login verification code is:" in msg.get_content()
 
     def test_request_otp_with_plain_phone_digits(self, client):
         """Phone without leading '+' should also be accepted."""
