@@ -16,6 +16,7 @@ from .db_health import db_health_bp
 from .health    import health_bp
 from .users     import users_bp
 from .addresses import addresses_bp
+from .admin_auth_routes import admin_auth_bp
 
 
 def register_blueprints(app: Flask) -> None:
@@ -31,6 +32,9 @@ def register_blueprints(app: Flask) -> None:
 
     # ── STEP 5: Authentication ────────────────────────────────────────────────────
     app.register_blueprint(auth_bp,      url_prefix="/api/v1/auth")
+
+    # ── Admin Authentication (login, /me, logout) ────────────────────────────────
+    app.register_blueprint(admin_auth_bp, url_prefix="/api/v1/admin")
 
     # ── STEP 6: User Profile + Address API ──────────────────────────────────────
     app.register_blueprint(users_bp,     url_prefix="/api/v1/users")

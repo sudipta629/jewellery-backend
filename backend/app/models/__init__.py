@@ -16,6 +16,9 @@
 from .user    import User     # noqa: F401
 from .address import Address  # noqa: F401
 
+# Admin accounts (password-based, CLI-seeded)
+from .admin import Admin  # noqa: F401
+
 # STEP 5 — Auth
 from .otp_verification import OTPVerification  # noqa: F401
 from .token_blacklist  import TokenBlacklist   # noqa: F401

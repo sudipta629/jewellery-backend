@@ -25,7 +25,28 @@ load_dotenv()
 
 from app import create_app  # noqa: E402  (import after load_dotenv is intentional)
 
+import click
+
 app = create_app()
+
+
+@app.cli.command("init-admin")
+def init_admin():
+    """
+    Seed the first admin account from ADMIN_USERNAME + ADMIN_PASSWORD env vars.
+
+    Run once after deployment:
+        flask init-admin
+
+    Idempotent: safe to call multiple times — will not create duplicates.
+    """
+    from app.services.admin_service import AdminService
+    created, message = AdminService.init_admin_from_env()
+    if created:
+        click.secho(f"[init-admin] {message}", fg="green")
+    else:
+        click.secho(f"[init-admin] {message}", fg="yellow")
+
 
 if __name__ == "__main__":
     host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1")
@@ -38,3 +59,4 @@ if __name__ == "__main__":
     print(f"  Health check: http://{host}:{port}/api/v1/health\n")
 
     app.run(host=host, port=port, debug=debug)
+
